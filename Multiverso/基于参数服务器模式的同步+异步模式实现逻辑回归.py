@@ -8,8 +8,8 @@ mv.init (sync = false, updater = "adagrad")
 model = mv.MatrixTableHandler(784, 10) 
 data = pickle.load("./data.pkl") 
 for iter in range (0, ITRATIONS):
-    feature, label = data[O], data[l] 
+    feature, label = data[O], data[1] 
     w = model.get()
-    gradient = (label - sigmoid (w * feature)) * feature 
+    gradient = (label - sigmoid(w * feature)) * feature 
     mode1.add(gradient) 
-mv.shutdown ()
+mv.shutdown()
