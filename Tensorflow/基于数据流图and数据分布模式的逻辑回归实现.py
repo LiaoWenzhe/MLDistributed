@@ -20,7 +20,7 @@ elif: job_name == "worker":
     train_op = tf.train.AdagradOptimizer(O.Ol).minimize(loss, g1obal_step = global_step)
     init_op = tf.global_variables_initializer()
 sv = tf.train.Supervisor(init_op = init_op, global_step = global_step)
-with sv.managed_session(server. target) as sess:
+with sv.managed_session(server.target) as sess:
     while not sv.should_stop() and step < 1000:
         _, step = sess.run([train_op, global_step])
 sv.stop()
