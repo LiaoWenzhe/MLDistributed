@@ -25,6 +25,7 @@ object test {
   for (i <- 1 to cpuNum) cell_tac_2 += ArrayBuffer[Double]()
   for (i <- 1 to cpuNum) points += ArrayBuffer[ArrayBuffer[Vector[Double]]]()
   val system = ActorSystem("dbscan")
+ 
   def main(args: Array[String]): Unit = {
     //DBSCAN的参数设定
     val minPts = 10 //密度阈值
@@ -33,9 +34,8 @@ object test {
     var tac = hc.sql(
       s"""with tab_1 as (SELECT cell_tac ,count(*) count FROM  njyxnlc_hive_db.zcjl group by  cell_tac)
          |select cell_tac from  tab_1 where count <=4000 """.stripMargin)
-    hc.sql(  s"""SELECT *  from njyxnlc_hive_db.zcjl """.stripMargin).cache().createTempView("zcjl")
-    tac.collect.
-      foreach(row => {
+    hc.sql(s"""SELECT *  from njyxnlc_hive_db.zcjl """.stripMargin).cache().createTempView("zcjl")
+    tac.collect.foreach(row => {
         cell_tac.append(row.getAs("cell_tac").toString.toDouble)
       })
     var rowIndex = 0
@@ -59,6 +59,7 @@ object test {
       }
     }
     var points1 = points.toArray
+   
     class dbscan_Actor(points1:Array[Vector[Double]],key:Double) extends Actor {
         def receive = {
           case "dbscan" => runDBSCAN(points1, ePs, minPts, key)
@@ -76,45 +77,45 @@ object test {
     system.shutdown()
    }
   
-  //DBSCAN算法实现
+  // DBSCAN算法实现
   def runDBSCAN(data:Array[Vector[Double]],ePs:Double,minPts:Int, key:Double):Unit ={
     println("runDBSCAN:" + key)
-    val types = (for(i <- 0 to data.length - 1) yield -1).toArray //用来划分各点属于哪个种类型的点（核心点标记为1，边界点标记为0，噪音点标记为-1(即cluster中值为0的点)
-    val visited = (for(i <- 0 to data.length - 1) yield 0).toArray //用来判断点有没有处理过，处理过标记为1，没有处理过的标记为0
-    var number = 1 //用于标记划分的类
+    val types = (for(i <- 0 to data.length - 1) yield -1).toArray // 用来划分各点属于哪个种类型的点（核心点标记为1，边界点标记为0，噪音点标记为-1(即cluster中值为0的点)
+    val visited = (for(i <- 0 to data.length - 1) yield 0).toArray // 用来判断点有没有处理过，处理过标记为1，没有处理过的标记为0
+    var number = 1 // 用于标记划分的类
     var xTempPoint = Vector(0.0,0.0)
     var yTempPoint = Vector(0.0,0.0)
     var distance = new Array[(Double,Int)](1)
     var distanceTemp = new Array[(Double,Int)](1)
     val neighPoints = new ArrayBuffer[Vector[Double]]()
     var neighPointsTemp = new Array[Vector[Double]](1)
-    val clusters = new Array[Int](data.length) //用于标记每个数据点所属的类别
+    val clusters = new Array[Int](data.length) // 用于标记每个数据点所属的类别
     var index = 0
-    for(i <- 0 to data.length - 1){//对每一个点的数据进行处理以及对其分类
+    for(i <- 0 to data.length - 1){// 对每一个点的数据进行处理以及对其分类
       println("test_1:" + key)
       neighPoints.clear()
-      if(visited(i) == 0){ //表示该点未被处理
-        visited(i) == 1 //标记为处理过
-        xTempPoint = data(i) //取到该点的数据
-        distance = data.map(x => (vectorDis(x,xTempPoint),data.indexOf(x)))//取得该点到其他所有点的距离Array{(distance,index)}
-        neighPoints ++= distance.filter(x => x._1 <= ePs).map(v => data(v._2)) //找到半径ePs内的所有点(密度相连点集合)
+      if(visited(i) == 0){ // 表示该点未被处理
+        visited(i) == 1 // 标记为处理过
+        xTempPoint = data(i) // 取到该点的数据
+        distance = data.map(x => (vectorDis(x,xTempPoint),data.indexOf(x)))// 取得该点到其他所有点的距离Array{(distance,index)}
+        neighPoints ++= distance.filter(x => x._1 <= ePs).map(v => data(v._2)) // 找到半径ePs内的所有点(密度相连点集合)
         println("test_2:" + key)
         if(neighPoints.length > 1 && neighPoints.length < minPts){
           breakable{
-            for(item <- 0 to neighPoints.length -1 ){//此为非核心点，若其领域内有核心点，则该点为边界点
+            for(item <- 0 to neighPoints.length -1 ){// 此为非核心点，若其领域内有核心点，则该点为边界点
             var index = data.indexOf(neighPoints(item))
               if(types(index) == 1){
-                types(i) = 0//标记为边界点
+                types(i) = 0// 标记为边界点
                 break
               }
             }
           }
         }
-        if(neighPoints.length >= minPts){//核心点,此时neighPoints表示以该核心点出发的密度相连点的集合
+        if(neighPoints.length >= minPts){// 核心点,此时neighPoints表示以该核心点出发的密度相连点的集合
           types(i) = 1
           clusters(i) = number
-          while(neighPoints.isEmpty == false){ //对该核心点领域内的点迭代寻找核心点，直到所有核心点领域半径内的点组成的集合不再扩大（每次聚类 ）
-            yTempPoint =neighPoints.head //取集合中第一个点
+          while(neighPoints.isEmpty == false){ // 对该核心点领域内的点迭代寻找核心点，直到所有核心点领域半径内的点组成的集合不再扩大（每次聚类 ）
+            yTempPoint =neighPoints.head // 取集合中第一个点
             index = data.indexOf(yTempPoint)
             if(visited(index) == 1){
               if(types(index) == -1){
@@ -122,47 +123,47 @@ object test {
                 types(index) = 0
               }
             }
-            if(visited(index) == 0){//若该点未被处理，则标记已处理
+            if(visited(index) == 0){// 若该点未被处理，则标记已处理
               visited(index) = 1
               if(clusters(index)==0) clusters(index) = number
-              distanceTemp = data.map(x => (vectorDis(x,yTempPoint),data.indexOf(x)))  //取得该点到其他所有点的距离Array{(distance,index)}
-              neighPointsTemp = distanceTemp.filter(x => x._1 <= ePs).map(v => data(v._2)) //找到半径ePs内的所有点
+              distanceTemp = data.map(x => (vectorDis(x,yTempPoint),data.indexOf(x)))  // 取得该点到其他所有点的距离Array{(distance,index)}
+              neighPointsTemp = distanceTemp.filter(x => x._1 <= ePs).map(v => data(v._2)) // 找到半径ePs内的所有点
               if(neighPointsTemp.length >= minPts) {
-                types(index) = 1 //该点为核心点
+                types(index) = 1 // 该点为核心点
                 for (i <- 0 to neighPointsTemp.length - 1) {
-                  //将其领域内未分类的对象划分到簇中,然后放入neighPoints
+                  // 将其领域内未分类的对象划分到簇中,然后放入neighPoints
                   if (clusters(data.indexOf(neighPointsTemp(i))) == 0) {
-                    clusters(data.indexOf(neighPointsTemp(i))) = number //只划分簇，没有访问到
+                    clusters(data.indexOf(neighPointsTemp(i))) = number // 只划分簇，没有访问到
                     neighPoints += neighPointsTemp(i)
                   }
                 }
               }
-              if(neighPointsTemp.length > 1 && neighPointsTemp.length < minPts){//
+              if(neighPointsTemp.length > 1 && neighPointsTemp.length < minPts){
                 breakable{
-                  for(i <- 0 to neighPointsTemp.length -1 ){//此为非核心点，若其领域内有核心点，则该点为边界点
+                  for(i <- 0 to neighPointsTemp.length -1 ){// 此为非核心点，若其领域内有核心点，则该点为边界点
                   var index1 = data.indexOf(neighPointsTemp(i))
                     if(types(index1) == 1){
-                      types(index) = 0//边界点
+                      types(index) = 0// 边界点
                       break
                     }
                   }
                 }
               }
             }
-            neighPoints -= yTempPoint //将该点剔除
+            neighPoints -= yTempPoint // 将该点剔除
           }
-          number += 1 //进行新的聚类
+          number += 1 // 进行新的聚类
         }
       }
     }
     printResult(data, clusters, types,key)
   }
   
-  //结果保存,最好是把结果保存到HIVE中，最好就是把源始数据打上类别标志
+  // 结果保存,最好是把结果保存到HIVE中，最好就是把源始数据打上类别标志
   def printResult(data:Array[Vector[Double]],clusters:Array[Int],types:Array[Int],item:Double) = {
     println("printResult:" + item)
     val result = data.map(v => (clusters(data.indexOf(v)),v)).groupBy(v => v._1) //Map[int,Array[(int,Vector[Double])]]
-    //key代表簇号，value代表属于这一簇的元素数组,转化为Clusters对象。
+    // key代表簇号，value代表属于这一簇的元素数组,转化为Clusters对象。
     var coenblist: ListBuffer[Clusters] = new ListBuffer[Clusters]()
     result.foreach(v =>{
       val data = v._2.map(v => Clusters(v._1,v._2(0),v._2(1),v._2(2)))
@@ -204,7 +205,7 @@ object test {
       """.stripMargin).coalesce(1).write.option("header",true).csv(s"/jc_njyxnlc/lwz/${clusters_tac}.csv")
   }
   
-  //--------------------------两个经纬度之间的距离-----------------------------
+  // --------------------------两个经纬度之间的距离-----------------------------
   def vectorDis(v1: Vector[Double], v2: Vector[Double]):Double = {
     var distance = 0.0
     distance = getDistance(v1(1),v1(0),v2(1),v2(0))
