@@ -15,3 +15,4 @@
 <div align=center><img src="https://user-images.githubusercontent.com/45705519/125216804-d8f71800-e2f1-11eb-8965-5f81c3591e0b.png" width="800" height="400" /></div>
 
 
+参考：《分布式机器学习：算法，理论与实践》刘铁岩
