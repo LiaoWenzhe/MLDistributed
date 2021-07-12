@@ -26,4 +26,5 @@
 <div align=center><img src="https://user-images.githubusercontent.com/45705519/125265174-29449900-e337-11eb-9393-915b879999d3.png" width="600" height="400" /></div>
 
 
+
 参考：《分布式机器学习：算法，理论与实践》刘铁岩
