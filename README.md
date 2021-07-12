@@ -13,6 +13,8 @@
 <div align=center><img src="https://user-images.githubusercontent.com/45705519/125218464-a3ecc480-e2f5-11eb-871e-d6fb8074752f.png" width="600" height="300" /></div>
 4.3种模式的区别：
 <div align=center><img src="https://user-images.githubusercontent.com/45705519/125216804-d8f71800-e2f1-11eb-8965-5f81c3591e0b.png" width="800" height="400" /></div>
+5.各种框架对比图, angel是腾讯开源的参数服务器框架，spark是mapreduce流派的代表，tensorflow和pytorch是数据流图的代表。
+<div align=center><img src="https://user-images.githubusercontent.com/45705519/125265174-29449900-e337-11eb-9393-915b879999d3.png" width="800" height="400" /></div>
 
 
 参考：《分布式机器学习：算法，理论与实践》刘铁岩
